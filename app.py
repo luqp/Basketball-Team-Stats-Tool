@@ -1,7 +1,7 @@
 import constants
 import os
 import random
-from pdb import set_trace
+
 
 def clean_screen():
     os.system("cls" if os.name == "nt" else "clear")
@@ -25,8 +25,6 @@ def show_teams(teams):
     for team_numerate in enumerate(teams, 1):
         print("  {}) \u2B50 {}".format(*team_numerate))
 
-    return teams
-
 
 def show_menu_to_select():
     clean_screen()
@@ -39,31 +37,39 @@ def show_menu_to_select():
     return user_input()
 
 
+def show_exit_message():
+    print("\nStats tool closed... \U0001F6A7\n")
+
+
 def show_team_stats(team, players, guardians):
     clean_screen()
-    phrase = "\nTeam: {} Stats \u26A1\n".format(team)
+    team_name = "\nTeam: {} Stats \u26A1\n".format(team)
     players_name = [player['name'] for player in players]
     heights = [player['height'] for player in players]
-    experience = [player for player in players if player['experience'] == "YES"]
-    inexperience = [player for player in players if player['experience'] == "NO"]
-    
+    inexperience = [player for player in players if player['experience']]
+    experience = [player for player in players if player['experience']]
+
     print(
-        phrase,
+        team_name,
         "-" * 15, "\n",
-        "Total players: {}\n".format(len(players)))
+        "Total players: {} \u2640 \u2642\n".format(len(players)))
     print(
         "Players on Team: ",
         " \U0001F3C3" * len(players), "\n"
-        "  {}".format(", ".join(players_name)), "\n"
-        )
-    print("\U0001F3C0 Total team experience: {}".format(len(experience)))
-    print("\U0001F3C0 Total team inexperience: {}".format(len(inexperience)))
-    print("\U0001F3C0 The team average height: {}".format(get_average_height(heights)))
+        "  {}".format(", ".join(players_name)), "\n")
+    print(
+        "\U0001F3C0 Total team experience:",
+        "{}  \U0001F985".format(len(experience)))
+    print(
+        "\U0001F3C0 Total team inexperience:",
+        "{}  \U0001F424".format(len(inexperience)))
+    print(
+        "\U0001F3C0 The team average height:",
+        "{} inches".format(get_average_height(heights)))
     print(
         "\nTeam's Guardians: \U0001F3C6\n",
         "  {}".format(", ".join(guardians)),
-        "\n\n"
-        )
+        "\n\n")
 
 
 def get_average_height(heights):
@@ -72,93 +78,95 @@ def get_average_height(heights):
     for size in heights:
         height = size.split()
         sum_heights += int(height[0])
-    
+
     return round(sum_heights / len(heights))
 
 
-def distribute_players(teams):
-    players = constants.PLAYERS[:]
-    complete_teams = []
-
-    exp = ["YES", "NO"]
-    players_per_team = len(players) // len(teams)
-    for team in teams:
-        group = []
-        guardians = []
-        for i in range(players_per_team):
-            not_selected = True
-            
-            while not_selected:
-                player = random.choice(players)
-                if player['experience'] == exp[i % len(exp)]:
-                    group.append(player)
-                    players.remove(player)
-                    guardians.extend(player['guardians'].split(" and "))
-                    not_selected = False
-
-        team_players_guardians = team, group, guardians
-        complete_teams.append(team_players_guardians)
-
-    return complete_teams
-
-
-def keep_display_teams():
+def keep_display_teams(keep):
     choice = None
-    keep = True
     while choice != 'y':
-        print(
-            " To continue selecting teams press the [y] key\n",
-            "To change team combination press the [c] key\n",
-            "Otherwise press the [n]o key:")
+        print("To continue selecting teams press the [y] key")
+        print("To change team combination press the [c] key")
+        print("Otherwise press the [n]o key:")
         choice = user_input()
 
         if choice == 'n':
-            print("\nStats tool closed... \U0001F6A7\n")
+            show_exit_message()
             keep = False
             break
 
         if choice == 'c':
             break
-            
+
         clean_screen()
+        show_title()
 
     return keep, choice
-    
+
+
+def distribute_players(teams):
+    players = constants.PLAYERS[:]
+    total_per_team = len(players) // len(teams)
+    complete_teams = []
+    exp = ["YES", "NO"]
+
+    for team in teams:
+        enlisteds = []
+        guardians = []
+
+        for number in range(total_per_team):
+            not_enlisted = True
+
+            while not_enlisted:
+                origin = random.choice(players)
+
+                if origin['experience'] == exp[number % len(exp)]:
+                    players.remove(origin)
+                    player = origin.copy()
+
+                    player['experience'] = False if origin['experience'] == 'NO' else True
+                    enlisteds.append(player)
+                    guardians.extend(player['guardians'].split(" and "))
+                    not_enlisted = False
+
+        team_players_guardians = team, enlisteds, guardians
+        complete_teams.append(team_players_guardians)
+
+    return complete_teams
+
 
 def new_combination():
-    teams = constants.TEAMS
+    teams = constants.TEAMS[:]
     players = distribute_players(teams)
     return teams, players
 
 
 def start_tool():
     teams, complete_teams = new_combination()
-    answers = ['1', 'y', 'display team', 'display']
-    choice = None
+    answers = ['1', 'display team', 'display']
 
+    choice = None
     while choice not in answers:
-        choice = show_menu_to_select() 
+        choice = show_menu_to_select()
         if choice == "2" or choice == "quit":
-            print("\nStats tool closed... \U0001F6A7\n")
+            show_exit_message()
             return
 
-    keep =  True
-
+    keep = True
     while keep:
         try:
             show_teams(teams)
-            user_picked = user_input()
-            picked = int(user_picked) - 1
+            picked = int(user_input()) - 1
         except ValueError:
             picked = None
-            pass
 
         if picked in range(len(teams)):
             show_team_stats(*complete_teams[picked])
-            keep, selection = keep_display_teams()
+            keep, selection = keep_display_teams(keep)
 
             if selection == 'c':
                 teams, complete_teams = new_combination()
+
 
 if __name__ == "__main__":
     start_tool()
