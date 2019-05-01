@@ -43,32 +43,32 @@ def show_exit_message():
 
 def show_team_stats(team, players, guardians):
     clean_screen()
-    team_name = "\nTeam: {} Stats \u26A1\n".format(team)
+    team_name = "Team:\n\033[1;32m {} Stats \033[0;m\n".format(team)
     players_name = [player['name'] for player in players]
     heights = [player['height'] for player in players]
     inexperience = [player for player in players if player['experience']]
     experience = [player for player in players if player['experience']]
 
     print(
-        team_name,
-        "-" * 15, "\n",
-        "Total players: {} \u2640 \u2642\n".format(len(players)))
+        team_name +
+        "-" * 16, "\n" +
+        "Total players:\n  ",
+        "{} \u2640\u2642\n".format(len(players)))
     print(
-        "Players on Team: ",
-        " \U0001F3C3" * len(players), "\n"
-        "  {}".format(", ".join(players_name)), "\n")
+        "Players on Team:\n  "
+        "{}".format(", ".join(players_name)), "\n")
     print(
         "\U0001F3C0 Total team experience:",
-        "{}  \U0001F985".format(len(experience)))
+        "{}".format(len(experience)))
     print(
         "\U0001F3C0 Total team inexperience:",
-        "{}  \U0001F424".format(len(inexperience)))
+        "{}".format(len(inexperience)))
     print(
         "\U0001F3C0 The team average height:",
         "{} inches".format(get_average_height(heights)))
     print(
-        "\nTeam's Guardians: \U0001F3C6\n",
-        "  {}".format(", ".join(guardians)),
+        "\nTeam's Guardians: \U0001F3C6\n  ",
+        "{}".format(", ".join(guardians)),
         "\n\n")
 
 
