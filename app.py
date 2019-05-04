@@ -41,18 +41,23 @@ def show_exit_message():
     print("\nStats tool closed... \U0001F6A7\n")
 
 
-def show_team_stats(team, players, guardians):
+def show_team_stats(team, players):
     clean_screen()
-    team_name = "Team:\n\033[1;32m {} Stats \033[0;m\n".format(team)
-    players_name = [player['name'] for player in players]
+    guardians = []
+
+    for player in players:
+        guardians.extend(player['guardians'])
+
     heights = [player['height'] for player in players]
-    inexperience = [player for player in players if player['experience']]
+    players_name = [player['name'] for player in players]
     experience = [player for player in players if player['experience']]
+    inexperience = [player for player in players if not player['experience']]
+    team_name = "Team:\n\033[1;37;44m {} Stats \033[0;m\n".format(team)
 
     print(
         team_name +
         "-" * 16, "\n" +
-        "Total players:\n  ",
+        "Total players:\n ",
         "{} \u2640\u2642\n".format(len(players)))
     print(
         "Players on Team:\n  "
@@ -65,21 +70,11 @@ def show_team_stats(team, players, guardians):
         "{}".format(len(inexperience)))
     print(
         "\U0001F3C0 The team average height:",
-        "{} inches".format(get_average_height(heights)))
+        "{} inches".format(sum(heights)//len(heights)))
     print(
-        "\nTeam's Guardians: \U0001F3C6\n  ",
+        "\nTeam's Guardians: \U0001F3C6\n ",
         "{}".format(", ".join(guardians)),
         "\n\n")
-
-
-def get_average_height(heights):
-    sum_heights = 0
-
-    for size in heights:
-        height = size.split()
-        sum_heights += int(height[0])
-
-    return round(sum_heights / len(heights))
 
 
 def keep_display_teams(keep):
@@ -104,33 +99,43 @@ def keep_display_teams(keep):
     return keep, choice
 
 
+def obtain_players_data():
+    players = []
+    for origin in constants.PLAYERS:
+        player = {}
+        player['name'] = origin['name']
+        experience = False if origin['experience'] == 'NO' else True
+        guardians = origin['guardians'].split(" and ")
+        height = int(origin['height'].split()[0])
+        player['experience'] = experience
+        player['guardians'] = guardians
+        player['height'] = height
+        players.append(player)
+    
+    return players
+
+
 def distribute_players(teams):
-    players = constants.PLAYERS[:]
+    players = obtain_players_data()
     total_per_team = len(players) // len(teams)
     complete_teams = []
-    exp = ["YES", "NO"]
 
     for team in teams:
         enlisteds = []
-        guardians = []
 
         for number in range(total_per_team):
             not_enlisted = True
 
             while not_enlisted:
-                origin = random.choice(players)
+                player = random.choice(players)
 
-                if origin['experience'] == exp[number % len(exp)]:
-                    players.remove(origin)
-                    player = origin.copy()
-
-                    player['experience'] = False if origin['experience'] == 'NO' else True
+                if player['experience'] == number % 2:
+                    players.remove(player)
                     enlisteds.append(player)
-                    guardians.extend(player['guardians'].split(" and "))
                     not_enlisted = False
 
-        team_players_guardians = team, enlisteds, guardians
-        complete_teams.append(team_players_guardians)
+        team_players= team, enlisteds
+        complete_teams.append(team_players)
 
     return complete_teams
 
